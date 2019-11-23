@@ -359,11 +359,21 @@ class GitInteractor {
 
         // Pass the rule if the parent folder doesn't exist and the command
         // doesn't tell us to do otherwise.
-        if (!Files.exists(Paths.get(path.toString()).getParent())){
-            result.setPassed(true);
-            return result;
+//         if (!Files.exists(Paths.get(path.toString()).getParent())){
+//             result.setPassed(true);
+//             return result;
+//         }
+        
+        // Find the first directory who's parent exists (if the entire path exists, just copy the path).
+        Path path_copy = Paths.get(path);
+        while (!Files.exists(path_copy.getParent())){
+            path_copy = path_copy.getParent();
         }
-
+        path_copy = path_copy.toString();
+        
+        // Create directories up to the file; creating the file should now work.
+        Files.createDirectories(Paths.get(path).getParent());
+         
         // Create a file
         try {
             Files.write(path, DUMMY_CONTENT.getBytes(), StandardOpenOption.CREATE_NEW);
@@ -394,6 +404,10 @@ class GitInteractor {
         if (backupPath == null){
             try {
                 Files.delete(path);
+                //Now the directories we may have created will be empty, so delete them.
+                if (!path.eqals(path_copy)){
+                    Files.delete(path_copy)
+                }      
             } catch (IOException e) {
                 result.setPassed(false);
                 result.setMessage("Failed to check if a file is ignored because I couldn't remove the temporary file");
